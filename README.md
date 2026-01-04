@@ -9,3 +9,7 @@ sky:
     username: root
     password: 1234561
 ```
+```
+git checkout -b zhamonic-sky-takeout
+含义：创建新分支 + 立刻切换到它
+```
