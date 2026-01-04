@@ -12,4 +12,8 @@ sky:
 ```
 git checkout -b zhamonic-sky-takeout
 含义：创建新分支 + 立刻切换到它
+
+（分两步）
+git branch zhamonic-sky-takeout   # 只创建
+git checkout zhamonic-sky-takeout # 再切换
 ```
