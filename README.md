@@ -17,3 +17,7 @@ git checkout -b zhamonic-sky-takeout
 git branch zhamonic-sky-takeout   # 只创建
 git checkout zhamonic-sky-takeout # 再切换
 ```
+
+```
+shift + table: 代码整体前移
+```
