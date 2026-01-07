@@ -1,0 +1,334 @@
+好的，我们直接用中文总结与讲解 😊
+
+## 🔍 git stash vs git commit — 清晰对比
+
+| 概念            | git stash       | git commit        |
+| ------------- | --------------- | ----------------- |
+| 作用            | **临时保存**未完成的修改  | **永久保存**到仓库历史     |
+| 保存位置          | stash 栈（临时区）    | 仓库历史（commit 记录）   |
+| 是否出现在 git log | 不出现             | 会出现               |
+| 典型场景          | 切分支 / 拉代码又不想提交  | 功能完成或阶段性节点        |
+| 是否包含未追踪文件     | 默认不包含（`-u` 才包含） | 只要 `git add` 就能提交 |
+| 是否会推送到远端      | 不会              | 可以 push           |
+| 风险            | 可能被 drop 丢失     | 基本永久              |
+
+👉 记忆方法
+
+* 👜 stash = 暂存未完成工作
+* 📚 commit = 正式记录成果
+
+---
+
+## 🧪 stash 冲突案例 & 解决方法
+
+### 情况
+
+你：
+
+* 本地改了 `app.js`
+* 还没写完，不想 commit
+* 但要 `git pull`
+
+### 第一步：先存起来
+
+```
+git stash
+```
+
+### 第二步：更新代码
+
+```
+git pull
+```
+
+### 第三步：恢复刚才的修改
+
+```
+git stash pop
+```
+
+---
+
+### ❗ 出现冲突（例子）
+
+```
+Auto-merging app.js
+CONFLICT (content): Merge conflict in app.js
+```
+
+说明：
+
+* 远端代码和你修改的内容冲突了
+
+---
+
+### ✅ 解决冲突
+
+打开文件会看到：
+
+```
+<<<<<<< Updated upstream
+远端代码
+=======
+你本地 stash 里的代码
+>>>>>>> Stashed changes
+```
+
+你需要做：
+
+1. 手动保留正确内容
+2. 删除这些标记符号
+3. 标记解决：
+
+```
+git add app.js
+```
+
+4. 然后提交：
+
+```
+git commit -m "resolve conflict after stash pop"
+```
+
+👉 补充
+
+* `git stash pop`：应用 + 删除 stash
+* `git stash apply`：只应用，不删除
+* apply 更安全
+
+---
+
+## 🎯 小练习（含答案）
+
+### 练习 1
+
+功能写一半，需要切到另一个分支修紧急 bug
+👉 用什么？
+
+✔ 答案：`git stash`
+原因：未完成代码不要 commit
+
+---
+
+### 练习 2
+
+功能完成、测试通过，要合并主分支
+👉 用什么？
+
+✔ 答案：`git commit` + `git push`
+
+---
+
+### 练习 3
+
+判断题
+
+> stash 的内容会进入仓库历史
+
+❌ 错
+stash 是临时区，不在 commit 历史里
+
+---
+
+### 练习 4
+
+包含未追踪文件一起存储
+
+👉 填空：
+
+```
+git stash ____
+```
+
+✔ 答案：`-u`
+
+---
+
+### 练习 5
+
+执行 `git stash pop` 后冲突了，正确步骤？
+
+👉 顺序：
+
+1. 打开冲突文件
+2. 手动合并
+3. `git add`
+4. `git commit`
+
+---
+
+如果你愿意，下一步我可以：
+
+* 🧭 画 ASCII 图讲 stash 工作流
+* 🧪 出一套 Git 面试题
+* ⚔️ 演示 stash 丢失后的找回方法
+
+Great, let’s do all three 👍
+
+## 🔍 Git stash vs Git commit — clear comparison
+
+| Concept                   | git stash                                      | git commit                                |
+| ------------------------- | ---------------------------------------------- | ----------------------------------------- |
+| Purpose                   | Temporarily save **unfinished** work           | Permanently record work in repo history   |
+| Saves to                  | **Stash stack** (temporary)                    | Repository history (permanent)            |
+| Visible in log?           | No (not in `git log`)                          | Yes (`git log`)                           |
+| Typical use               | Switch branches / pull code without committing | Finished feature or meaningful checkpoint |
+| Includes untracked files? | No by default (`git stash -u` to include)      | Yes if you `git add` them                 |
+| Safe to push?             | Not pushed                                     | Pushed to remote repo                     |
+| Risk                      | Can be accidentally dropped                    | Permanent (unless rewritten)              |
+
+**Simple rule**
+
+* ⛱ **stash** = “park unfinished work”
+* ✅ **commit** = “record real progress”
+
+---
+
+## 🧪 Stash conflict example and resolution
+
+### Scenario
+
+You:
+
+* changed `app.js` locally (unstaged)
+* want to pull main branch
+* don’t want to commit yet
+
+### Step 1 — stash work
+
+```
+git stash
+```
+
+### Step 2 — pull latest code
+
+```
+git pull
+```
+
+### Step 3 — re-apply stash
+
+```
+git stash pop
+```
+
+### ❗ Conflict happens example output
+
+```
+Auto-merging app.js
+CONFLICT (content): Merge conflict in app.js
+```
+
+### ✅ How to resolve
+
+1. Open file
+2. Fix conflict markers:
+
+```
+<<<<<<< Updated upstream
+code from main branch
+=======
+your stashed code
+>>>>>>> Stashed changes
+```
+
+3. Keep correct final version
+4. Mark conflict resolved:
+
+```
+git add app.js
+```
+
+5. Continue work or commit:
+
+```
+git commit -m "resolve conflict after stash pop"
+```
+
+### 💡 Tips
+
+* `git stash pop` = apply + remove stash
+* `git stash apply` = apply only (stash still saved)
+* If messy conflict → you can drop stash safely later
+
+---
+
+## 🎯 Mini practice exercises (with answers)
+
+### **Exercise 1**
+
+You:
+
+* edited 3 files
+* code is **half-done**
+* PM asks you to urgently fix bug on another branch
+
+**Question:** Which command should you use?
+
+**Answer:** `git stash`
+**Reason:** work is unfinished → don’t commit noise
+
+---
+
+### **Exercise 2**
+
+You:
+
+* completed feature
+* all tests pass
+* ready to share with team
+
+**What to use?**
+
+**Answer:** `git commit` then `git push`
+
+---
+
+### **Exercise 3**
+
+True or False:
+
+> Stash changes are included in repository history
+
+**Answer:** ❌ False
+Stash is **temporary storage stack**, not history
+
+---
+
+### **Exercise 4**
+
+Fill in blanks:
+
+* Save untracked files into stash → `git stash ___`
+
+**Answer:** `git stash -u`
+
+---
+
+### **Exercise 5**
+
+You ran:
+
+```
+git stash pop
+```
+
+Conflict occurred. What are next steps (order)?
+
+**Answer:**
+
+1. open conflict files
+2. edit & resolve markers
+3. `git add`
+4. commit or continue work
+
+---
+
+If you'd like next, I can:
+
+* 🧭 draw ASCII diagrams for stash workflow
+* 💻 do **interactive mock interview Q&A**
+* 🧨 show “stash lost accidentally” recovery steps
+
+
+
