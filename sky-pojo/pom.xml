@@ -2,23 +2,34 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ★ 这里必须和根 pom 完全一致：com.sky / sky-take-out-Monica -->
     <parent>
-        <groupId>org.example</groupId>
+        <groupId>com.sky</groupId>
         <artifactId>sky-take-out-Monica</artifactId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 显式声明一下自己的坐标（可选，但清晰） -->
+    <groupId>com.sky</groupId>
     <artifactId>sky-pojo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.9.2</version>
         </dependency>
+
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-spring-boot-starter</artifactId>

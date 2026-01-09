@@ -3,10 +3,14 @@ package com.sky.controller.admin;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
+import com.sky.properties.JwtProperties;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
+import com.sky.vo.EmployeeLoginVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +30,9 @@ public class EmployeeController {
 
     @Autowired
     private EmployeeService employeeService;
+
+    @Autowired
+    private JwtProperties jwtProperties;   // ⭐ 在这里注入
 
     /**
      * 登录
@@ -66,5 +73,34 @@ public class EmployeeController {
         employeeService.save(employeeDTO);
 
         return Result.success();
+    }
+
+    /**
+     * 员工分页查询
+     * @param employeePageQueryDTO
+     * @return
+     */
+    @GetMapping("/page")
+    @ApiOperation("员工分页查询")
+    public Result<PageResult> page(EmployeePageQueryDTO employeePageQueryDTO){
+        log.info("员工分页查询，参数为：{}", employeePageQueryDTO);
+        PageResult pageResult = employeeService.pageQuery(employeePageQueryDTO);//后续定义
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 启用禁用员工账号
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    @ApiOperation("启用禁用员工账号")
+    public Result startOrStop(@PathVariable Integer status,Long id){
+        log.info("启用禁用员工账号：{},{}",status,id);
+        employeeService.startOrStop(status,id);//后绪步骤定义
+        return Result.success();
+
+
     }
 }

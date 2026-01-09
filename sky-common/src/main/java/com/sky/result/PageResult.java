@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -16,5 +17,5 @@ import java.io.Serializable;
  */
 public class PageResult implements Serializable {
     private Long total;
-    private Long records;
+    private List records;
 }

@@ -1,45 +1,42 @@
 package com.sky.service.impl;
 
+import com.alibaba.druid.sql.parser.Lexer;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
+import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
-
-/**
- * 员工服务实现类
- * 提供员工相关的业务操作实现
- */
+@Slf4j
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
-
-    /**
-     * 员工数据访问对象
-     * 用于与数据库进行交互
-     */
     @Autowired
     private EmployeeMapper employeeMapper;
 
     /**
      * 员工登录
-     *
-     * @param employeeLoginDTO
-     * @return
      */
+    @Override
     public Employee login(EmployeeLoginDTO employeeLoginDTO) {
         String username = employeeLoginDTO.getUsername();
         String password = employeeLoginDTO.getPassword();
@@ -53,14 +50,13 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
         }
 
-        //密码比对
+        // 密码比对（后续可以改成 MD5）
         if (!password.equals(employee.getPassword())) {
-            //密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
 
+        // 账号被锁定
         if (employee.getStatus() == StatusConstant.DISABLE) {
-            //账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
 
@@ -70,14 +66,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     /**
      * 新增员工
-     *
-     * @param employeeDTO 员工数据传输对象，包含员工的基本信息
      */
+    @Override
     public void save(EmployeeDTO employeeDTO) {
-        // 创建员工实体对象
+        // 这里先写一个最简单的版本，保证编译通过
+        // 后面你可以按教程补充：设置默认密码、状态、时间等
+
         Employee employee = new Employee();
 
-        // 将DTO中的属性值拷贝到实体对象中
+        // TODO: 用 BeanUtils.copyProperties 或手动拷贝 DTO 到实体
         //对象属性拷贝
         BeanUtils.copyProperties(employeeDTO, employee);
 
@@ -87,14 +84,38 @@ public class EmployeeServiceImpl implements EmployeeService {
         //设置密码，默认密码123456
         employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
 
-        //设置当前记录的创建时间和修改时间
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
+        employeeMapper.insert(employee);
+    }
 
-        //设置当前记录创建人id和修改人id
-        employee.setCreateUser(10L);//目前写个假数据，后期修改
-        employee.setUpdateUser(10L);
+    /**
+     * 分页查询
+     *
+     * @param employeePageQueryDTO
+     * @return
+     */
+    public PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO) {
+        log.info("员工分页查询，参数为：{}", employeePageQueryDTO);
+        PageHelper.startPage(employeePageQueryDTO.getPage(), employeePageQueryDTO.getPageSize());
 
-        employeeMapper.insert(employee);//后续步骤定义
+        Page<Employee> page = employeeMapper.pageQuery(employeePageQueryDTO);//后续定义
+
+        long total = page.getTotal();
+        List<Employee> records = page.getResult();
+
+        return new PageResult(total, records);
+    }
+    /**
+     * 启用禁用员工账号
+     *
+     * @param status
+     * @param id
+     */
+    public void startOrStop(Integer status, Long id) {
+        Employee employee = Employee.builder()
+                .status(status)
+                .id(id)
+                .build();
+
+        employeeMapper.update(employee);
     }
 }
