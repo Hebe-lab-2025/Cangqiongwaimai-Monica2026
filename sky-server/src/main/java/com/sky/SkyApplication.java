@@ -1,6 +1,5 @@
 package com.sky;
 
-import com.apple.eawt.Application;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
