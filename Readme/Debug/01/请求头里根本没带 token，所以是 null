@@ -1,0 +1,207 @@
+这个 `EmployeeController` 写得基本是对的 👍，我们把它和你刚刚遇到的现象串起来看一遍。
+
+---
+
+## 1. 这个 Controller 现在在做什么？
+
+```java
+@RestController
+@RequestMapping("/admin/employee")
+@Api(tags = "员工管理")
+@Slf4j
+public class EmployeeController {
+```
+
+* 所有以 `/admin/employee` 开头的请求，都会走到这里。
+* 被 Swagger / knife4j 标注成「员工管理」分组。
+
+---
+
+### 1.1 登录接口 `/admin/employee/login`
+
+```java
+@PostMapping("/login")
+public Result<EmployeeLoginVO> login(@RequestBody EmployeeLoginDTO employeeLoginDTO) {
+    log.info("员工登录：{}", employeeLoginDTO);
+    // 1. 调 service，做用户校验（包含 MD5 密码比对）
+    Employee employee = employeeService.login(employeeLoginDTO);
+
+    // 2. 登录成功后，生成 jwt token
+    Map<String, Object> claims = new HashMap<>();
+    claims.put(JwtClaimsConstant.EMP_ID, employee.getId());
+
+    String token = JwtUtil.createJWT(
+            jwtProperties.getAdminSecretKey(),
+            jwtProperties.getAdminTtl(),
+            claims);
+
+    // 3. 组装返回给前端的数据
+    EmployeeLoginVO employeeLoginVO = EmployeeLoginVO.builder()
+            .id(employee.getId())
+            .userName(employee.getUsername())
+            .name(employee.getName())
+            .token(token)
+            .build();
+
+    // 4. 用统一的 Result 包一层返回
+    return Result.success(employeeLoginVO);
+}
+```
+
+🔍 结合你贴出来的登录响应：
+
+```json
+{
+  "code": 1,
+  "msg": null,
+  "data": {
+    "id": 1,
+    "userName": "admin",
+    "name": "管理员",
+    "token": "eyJhbGciOiJIUzI1NiJ9..."
+  }
+}
+```
+
+说明：
+
+* `employeeService.login()` 已经能查到 admin，并且 MD5 密码比对通过；
+* `JwtUtil.createJWT(...)` 也能正常生成 token；
+* `EmployeeLoginVO` 字段映射正常（id / userName / name / token 都有）。
+
+✅ **结论：登录接口已经 OK。**
+
+---
+
+### 1.2 新增员工接口 `/admin/employee`（POST）
+
+```java
+@PostMapping
+@ApiOperation("新增员工")
+public Result save(@RequestBody EmployeeDTO employeeDTO) {
+
+    log.info("新增员工：{}", employeeDTO);
+
+    employeeService.save(employeeDTO);
+
+    return Result.success();
+}
+```
+
+* 路径：`POST /admin/employee`（**没有 /login**）
+* 请求体：JSON，对应 `EmployeeDTO`
+* 内部调用 `employeeService.save(employeeDTO)` 完成新增
+* 成功时返回一个空的 `Result.success()`（通常 JSON 是 `{ "code": 1, "msg": null, "data": null }`）
+
+你之前的 curl 命令是：
+
+```bash
+curl -X POST \
+  -H "Accept:*/*" \
+  -H "Content-Type:application/json" \
+  -d "{\"id\":0,\"idNumber\":\"23\",\"name\":\"M\",\"phone\":\"\",\"sex\":\"\",\"username\":\"\"}" \
+  "http://localhost:8080/admin/employee"
+```
+
+这个路径和方法是对的 👉 调的就是「新增员工」接口。
+
+---
+
+## 2. 为什么日志里一直是 `jwt校验:null`？
+
+你后台有一个拦截器 `JwtTokenAdminInterceptor`，会在访问 `/admin/employee` 这些接口的时候，先从请求头里拿 token，然后打印：
+
+```java
+log.info("jwt校验:{}", token);
+```
+
+你日志里是这样：
+
+```text
+2026-01-07 18:41:40.502  INFO  ... JwtTokenAdminInterceptor : jwt校验:null
+```
+
+这说明两件事：
+
+1. 拦截器已经生效（说明 WebMvcConfiguration 注册 OK）
+2. **请求头里根本没带 token**，所以是 null
+
+也就是：
+
+> 新增员工接口被拦截器保护了，但你用 curl 调的时候没带 token，所以拦截器里 `request.getHeader(...)` 拿到的是 `null`。
+
+---
+
+## 3. 你现在正确的调用顺序应该是这样
+
+### 第一步：登录，拿 token
+
+调用：
+
+```bash
+curl -X POST \
+  -H "Content-Type:application/json" \
+  -d '{"username":"admin","password":"123456"}' \
+  "http://localhost:8080/admin/employee/login"
+```
+
+得到你刚才那种 JSON，里面有一个 `data.token`。
+
+---
+
+### 第二步：带着 token 去调「新增员工」
+
+关键是：**header 的名字必须和你 yml 里的配置一致**。
+在 `application-dev.yml` 里应该有类似配置：
+
+```yaml
+sky:
+  jwt:
+    admin-secret-key: xxxx
+    admin-ttl: 7200000
+    admin-token-name: token   # 比如是这个
+```
+
+如果是这样，那么 curl 应该写：
+
+```bash
+TOKEN="刚才登录返回的 token 那一串"
+
+curl -X POST \
+  -H "Accept:*/*" \
+  -H "Content-Type:application/json" \
+  -H "token: $TOKEN" \
+  -d '{"id":0,"idNumber":"23","name":"M","phone":"","sex":"","username":"m"}' \
+  "http://localhost:8080/admin/employee"
+```
+
+> ⚠️ 注意：
+>
+> * `-H "token: $TOKEN"` 这里的 `token` 必须等于 `admin-token-name` 的值；
+> * 如果 yml 写的是 `Authorization`，就改成 `-H "Authorization: $TOKEN"`；
+
+这样再看日志：
+
+* 拦截器应该会打印：`jwt校验:eyJhbGciOiJIUzI1NiJ9...`
+* 不会再是 `null`；
+* 如果 token 校验通过，就会继续走到 `EmployeeController.save()`。
+
+---
+
+## 4. 这个 Controller 还需要改什么吗？
+
+从你贴出的代码本身来看：
+
+* 路径、注解、依赖注入都正常；
+* 登录逻辑配合 `employeeService.login()`、`JwtUtil`、`JwtProperties` 是标准写法；
+* 新增员工接口也符合课程里的写法。
+
+所以现在的关键点不是 Controller 写错，而是：
+
+1. **DB 里的密码是否已经改成 MD5（`e10adc3949ba59abbe56e057f20f883e`）**；
+2. **调用新增员工接口时有没有带上正确 header 名称的 token**。
+
+如果你愿意，下一步你可以：
+
+* 把 `application-dev.yml` 里 `sky.jwt` 那一小段贴出来，我可以直接帮你生成一条「复制即可用」的 curl 命令；
+* 或者把 `JwtTokenAdminInterceptor.preHandle()` 那几行拿出来，我帮你画一张「登录 + 新增员工 + 拦截器」的 ASCII 时序图，让你彻底搞清楚请求怎么走。
