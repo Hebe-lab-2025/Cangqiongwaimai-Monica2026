@@ -5,9 +5,19 @@
 ![Image](https://media.geeksforgeeks.org/wp-content/uploads/20220305144809/SpringResponseBodyAnnotation.JPG)
 
 下面我**严格按你这张图**，用「**前端 → URL → Spring → 返回 → 页面更新**」的顺序，把**整条链路一次讲透**，**0 基础也能懂**。
-
+绝对路径
 ![Spring Controller 接参](https://github.com/Hebe-lab-2025/Cangqiongwaimai-Monica2026/blob/main/Readme/Springboot/images/Spring%20Controller%20%E6%8E%A5%E5%8F%82.png)
 
+相对路径
+![Spring Controller 接参](images/Spring%20Controller%20%E6%8E%A5%E5%8F%82.png)
+
+
+```
+![Spring Controller 接参](https://github.com/Hebe-lab-2025/Cangqiongwaimai-Monica2026/blob/main/Readme/Springboot/images/Spring%20Controller%20%E6%8E%A5%E5%8F%82.png)
+
+相对路径
+![Spring Controller 接参](images/Spring%20Controller%20%E6%8E%A5%E5%8F%82.png)
+```
 ---
 
 # 🧠 一、你这张图整体在干什么？（一句话版）
